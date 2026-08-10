@@ -1,0 +1,23 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Persisted swarm state (auto-created at runtime)
+engine_state/
+
+# Reference code library — 906 MB of puzzles, datasets, materials (not the engine)
+curriculum/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

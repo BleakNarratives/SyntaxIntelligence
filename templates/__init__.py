@@ -1,0 +1,3 @@
+"""
+Syntax Intelligence — Dashboard Templates
+"""

@@ -1,0 +1,197 @@
+═══════════════════════════════════════════════════════════════════
+              SYNTAX HARDENED SWARM — RUNBOOK
+         "Everyone starts at zero. Earn what you receive."
+═══════════════════════════════════════════════════════════════════
+
+
+QUICK COMMANDS
+──────────────────────────────────────────────────────────────────
+
+  Run tests:
+    python3 SyntaxIntelligence/test_hardened_engine.py
+
+  Boot the swarm:
+    python3 SyntaxIntelligence/hardened_engine.py
+
+  Boot with logging:
+    python3 -c "
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    from SyntaxIntelligence.hardened_engine import HardenedSwarm
+    s = HardenedSwarm()
+    print('Swarm ready:', s.session_id)
+    "
+
+
+PROGRAMMATIC USAGE
+──────────────────────────────────────────────────────────────────
+
+  1. CREATE A SWARM:
+     from SyntaxIntelligence.hardened_engine import HardenedSwarm
+     swarm = HardenedSwarm()
+
+  2. REGISTER AGENTS (they start at Tier 0):
+     agent = swarm.register_agent("alpha", "Alpha", capabilities=["code", "audit"])
+
+  3. OFFER A TASK:
+     result = swarm.offer_task(
+         title="Audit codebase",
+         description="Run static analysis",
+         capabilities=["code"],
+         min_tier=1,  # Minimum tier to accept
+     )
+     task_id = result["task_id"]
+
+  4. AGENT RESPONDS:
+     # Accept
+     swarm.respond_to_task("alpha", task_id, "accept", reason="I'll do it")
+     # OR Reject (no penalty!)
+     swarm.respond_to_task("alpha", task_id, "reject", reason="Not my thing")
+     # OR Request more info
+     swarm.respond_to_task("alpha", task_id, "request_info", requested_info="What files?")
+     # OR Delegate to another agent
+     swarm.respond_to_task("alpha", task_id, "delegate", delegate_to="beta")
+
+  5. COMPLETE A TASK:
+     swarm.complete_task(task_id, "alpha", result={"findings": 3})
+     # If the agent meets advancement criteria, they auto-advance!
+
+  6. FAIL A TASK:
+     swarm.fail_task(task_id, "alpha", reason="Timeout", critical=False)
+
+  7. VOUCH FOR ANOTHER AGENT (requires Tier 3+):
+     swarm.vouch_for("beta", "alpha", reason="Solid work")
+
+  8. CHECK AGENT PROGRESS:
+     progress = swarm.get_agent_progress("alpha")
+     print(progress)
+     # Returns: tasks_completed, hours_in_tier, peer_vouches, etc.
+
+  9. CHECK SWARM STATE:
+     state = swarm.get_swarm_state()
+     print(state["tier_distribution"])
+     print(state["task_stats"])
+
+ 10. RUN AN OFFLINE BOARDROOM REVIEW:
+     from SyntaxIntelligence.hardened_engine import HardenedSwarm
+     from SyntaxIntelligence.boardroom_dispatcher import BoardroomDispatcher
+     swarm = HardenedSwarm()
+     boardroom = BoardroomDispatcher(swarm)
+     boardroom.register("boardroom_01")
+     result = boardroom.execute("boardroom_01", "review_001", {
+         "decision": "Which bottleneck should we address first?",
+         "findings": [{"title": "Checkout timeout", "severity": "high", "category": "api_health"}],
+     })
+     print(result.to_dict())
+     # Offline only. `execution_allowed` is always False; review the action item manually.
+
+  11. SAVE/LOAD STATE:
+
+     swarm.save_state()
+     # Later...
+     swarm2 = HardenedSwarm()
+     swarm2.load_state()
+
+
+TIER ADVANCEMENT REQUIREMENTS
+──────────────────────────────────────────────────────────────────
+
+  RECRUIT → WORKER:
+    Tasks: 0    Hours: 0    Vouches: 0    Errors: ≤999    Reliability: 0%
+
+  WORKER → SPECIALIST:
+    Tasks: 10   Hours: 4    Vouches: 1    Errors: ≤2      Reliability: 90%
+
+  SPECIALIST → OPERATIVE:
+    Tasks: 30   Hours: 12   Vouches: 3    Errors: ≤1      Reliability: 95%
+
+  OPERATIVE → ARCHITECT:
+    Tasks: 75   Hours: 48   Vouches: 5    Errors: ≤1      Reliability: 97%
+
+  ARCHITECT → COUNCIL:
+    Tasks: 200  Hours: 168  Vouches: 8    Errors: 0       Reliability: 99%
+
+
+PRIVILEGES BY TIER
+──────────────────────────────────────────────────────────────────
+
+  TIER 0 (Recruit):    pulse
+  TIER 1 (Worker):     + accept_tasks, reject_tasks, read_memory
+  TIER 2 (Specialist): + write_memory, subscribe_bus, choose_persona
+  TIER 3 (Operative):  + publish_bus, switch_wig, spawn_subtask
+  TIER 4 (Architect):  + broadcast, spawn_agent, modify_self
+  TIER 5 (Council):    + vote_governance, amend_charter, full_autonomy
+
+
+TROUBLESHOOTING
+──────────────────────────────────────────────────────────────────
+
+  Q: My agent can't accept tasks!
+  A: They're probably Tier 0 (Recruit). Workers need 10 completed tasks
+     and 4 hours in tier to advance. Make sure they have the right
+     capabilities matching the task's required_capabilities.
+
+  Q: Vouch failed with "denied"?
+  A: Only Tier 3 (Operative) and above can vouch. Check the voucher's
+     tier with: swarm.get_agent("voucher_id")["tier_name"]
+
+  Q: State didn't load?
+  A: Check SyntaxIntelligence/engine_state/ for saved files. If empty,
+     there's no previous session to load.
+
+  Q: How is event-bus telemetry handled?
+  A: Subscribers receive the original payload, but the in-memory message log
+     stores flat metadata only. Publish/broadcast payload details are recorded
+     as [REDACTED], and callback/scheduler failures record only the exception
+     type. `get_message_log()` returns independent entry copies.
+
+  Q: Can I use the private bus._log() hook?
+  A: Existing validator and scheduler integrations may use it for trusted,
+     already-classified summaries. Never pass raw task, legal, or user-provided
+     payload text through it. It is not a payload logging escape hatch.
+
+  Q: Tests fail?
+  A: Run from the project root: python3 SyntaxIntelligence/test_hardened_engine.py
+     For telemetry-specific checks, run:
+     python3 -m unittest SyntaxIntelligence.test_event_bus_telemetry -v
+     The tests set up their own bus/swarm state, so no state is needed.
+
+
+EVENT-BUS TELEMETRY
+──────────────────────────────────────────────────────────────────
+
+  Privacy boundary:
+    - `publish()` and `broadcast()` preserve subscriber routing and delivery.
+    - Raw payloads, including `context.audit_text`, are never stringified into
+      `SyntaxEventBus._message_log`.
+    - Callback and cron errors record exception type, not exception text.
+    - `get_message_log()` returns independent flat-entry copies.
+
+  Staging/review:
+    - Review `SyntaxIntelligence/event_bus.py` and
+      `SyntaxIntelligence/test_event_bus_telemetry.py` together.
+    - The current workspace may show these paths as untracked because the
+      SyntaxIntelligence subtree has no tracked baseline. Ordinary `git diff`
+      can therefore omit them; use `git status --short`, explicit path review,
+      and `git diff --no-index /dev/null <path>` for untracked files.
+    - Keep the compatibility `_log()` hook trusted and payload-free.
+
+  Reference design:
+    SyntaxIntelligence/TELEMETRY_HARDENING_DESIGN.md
+
+
+FILE LOCATIONS
+──────────────────────────────────────────────────────────────────
+
+  Engine state:    SyntaxIntelligence/engine_state/
+  Config:          SyntaxIntelligence/syntax_config.yaml
+  Charter:         SyntaxIntelligence/swarm_charter.py (inline text)
+  Protocol:        SyntaxIntelligence/agent_protocol.py
+  Tests:           SyntaxIntelligence/test_hardened_engine.py
+                   SyntaxIntelligence/test_event_bus_telemetry.py
+  Telemetry design: SyntaxIntelligence/TELEMETRY_HARDENING_DESIGN.md
+
+
+═══════════════════════════════════════════════════════════════════
+  "Stop reading. Start building. The swarm is waiting."
+═══════════════════════════════════════════════════════════════════

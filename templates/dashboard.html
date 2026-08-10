@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SYRAX INTELLIGENCE // THE FIRST GENERAL INTELLIGENCE</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   SYRAX INTELLIGENCE — SYNTHWAVE SWARM DASHBOARD
+   "Costumes and masks. Jewelry and makeup. Wigs."
+   Dark synthwave × cyberpunk × 3D swarm visualization.
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg-deep: #05050f;
+  --bg-panel: rgba(8,8,28,0.92);
+  --synth-pink: #ff2d95;
+  --synth-cyan: #00e5ff;
+  --synth-purple: #b537f2;
+  --synth-gold: #ffb347;
+  --synth-green: #39ff14;
+  --synth-orange: #ff6d00;
+  --text-dim: #6a6a8a;
+  --text-body: #c8c8e0;
+  --border-subtle: rgba(255,45,149,0.15);
+  --glow-pink: 0 0 20px rgba(255,45,149,0.4);
+  --glow-cyan: 0 0 20px rgba(0,229,255,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg-deep);
+  overflow: hidden;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-body);
+}
+
+/* ── GRID OVERLAY ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,45,149,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 9998;
+}
+
+#canvas-container {
+  position: fixed; inset: 0; z-index: 1;
+}
+#canvas-container canvas { display: block; }
+
+/* ── HUD HEADER ── */
+#hud {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 50;
+}
+#hud-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, rgba(5,5,15,0.95) 0%, transparent 100%);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.hud-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.4rem; font-weight: 900;
+  letter-spacing: 6px;
+  background: linear-gradient(90deg, var(--synth-pink), var(--synth-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px var(--synth-pink));
+}
+.hud-stats {
+  text-align: right;
+  font-size: 0.55rem; letter-spacing: 2px;
+  color: var(--text-dim); line-height: 1.8;
+}
+.hud-stats em { color: var(--synth-cyan); font-style: normal; }
+
+/* ── AGENT CARDS (left sidebar) ── */
+#agent-panel {
+  position: fixed;
+  left: 12px; top: 80px; bottom: 60px;
+  width: 280px;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex; flex-direction: column; gap: 6px;
+  padding-right: 4px;
+}
+#agent-panel::-webkit-scrollbar { width: 3px; }
+#agent-panel::-webkit-scrollbar-thumb { background: var(--synth-pink); border-radius: 2px; }
+
+.agent-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 10px;
+  cursor: pointer; pointer-events: all;
+  transition: all 0.15s;
+  border-radius: 2px;
+  position: relative; overflow: hidden;
+}
+.agent-card:hover {
+  border-color: var(--synth-pink);
+  box-shadow: 0 0 15px rgba(255,45,149,0.15);
+}
+.agent-card.selected {
+  border-color: var(--synth-cyan);
+  box-shadow: 0 0 20px rgba(0,229,255,0.2);
+}
+.agent-card .ac-top {
+  display: flex; align-items: center; gap: 8px;
+}
+.ac-emoji { font-size: 1.6rem; }
+.ac-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem; letter-spacing: 2px;
+  flex: 1;
+}
+.ac-status {
+  font-size: 0.45rem; letter-spacing: 1px;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.ac-status.active { color: var(--synth-green); border: 1px solid var(--synth-green); }
+.ac-status.idle { color: var(--text-dim); border: 1px solid var(--text-dim); }
+.ac-status.listening { color: var(--synth-cyan); border: 1px solid var(--synth-cyan); animation: pulse-border 1.5s infinite; }
+.ac-status.optimizing { color: var(--synth-gold); border: 1px solid var(--synth-gold); }
+.ac-status.propagating { color: var(--synth-purple); border: 1px solid var(--synth-purple); }
+
+.ac-detail {
+  font-size: 0.45rem; color: var(--text-dim);
+  margin-top: 4px; line-height: 1.5;
+}
+.ac-detail span { color: var(--text-body); }
+
+/* ── EVENTS FEED (right sidebar) ── */
+#events-panel {
+  position: fixed;
+  right: 12px; top: 80px; bottom: 60px;
+  width: 280px;
+  z-index: 100;
+  display: flex; flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+}
+#events-header {
+  padding: 8px 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem; letter-spacing: 3px;
+  color: var(--synth-cyan);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; justify-content: space-between;
+}
+#events-feed {
+  flex: 1; overflow-y: auto;
+  padding: 6px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+#events-feed::-webkit-scrollbar { width: 3px; }
+#events-feed::-webkit-scrollbar-thumb { background: var(--synth-cyan); border-radius: 2px; }
+
+.event-line {
+  font-size: 0.45rem; line-height: 1.4;
+  padding: 3px 6px;
+  border-left: 2px solid var(--border-subtle);
+  animation: fadeIn 0.25s ease;
+}
+.event-line.pulse { border-color: var(--synth-pink); }
+.event-line.action { border-color: var(--synth-gold); }
+.event-line.wig_change { border-color: var(--synth-purple); }
+.event-line.error { border-color: #ff3333; }
+.event-line .ev-time { color: var(--text-dim); font-size: 0.38rem; }
+.event-line .ev-agent { color: var(--synth-cyan); }
+.event-line .ev-desc { color: var(--text-body); }
+
+/* ── WARDROBE PANEL (bottom) ── */
+#wardrobe-panel {
+  position: fixed;
+  bottom: 60px; left: 308px; right: 308px;
+  height: 0px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  z-index: 100;
+  overflow: hidden;
+  transition: height 0.3s ease;
+  display: flex; flex-direction: column;
+}
+#wardrobe-panel.open { height: 180px; }
+#wardrobe-header {
+  padding: 6px 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem; letter-spacing: 3px;
+  color: var(--synth-pink);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; justify-content: space-between;
+  flex-shrink: 0;
+  cursor: pointer; pointer-events: all;
+}
+#wardrobe-grid {
+  flex: 1; overflow-y: auto; padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+}
+#wardrobe-grid::-webkit-scrollbar { width: 3px; }
+#wardrobe-grid::-webkit-scrollbar-thumb { background: var(--synth-pink); }
+
+.wardrobe-item {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 8px;
+  font-size: 0.45rem;
+  cursor: pointer; pointer-events: all;
+  transition: all 0.15s;
+  border-radius: 2px;
+}
+.wardrobe-item:hover {
+  border-color: var(--synth-pink);
+  box-shadow: var(--glow-pink);
+}
+.wardrobe-item .wi-emoji { font-size: 0.9rem; }
+.wardrobe-item .wi-name { color: var(--synth-cyan); margin-top: 2px; }
+.wardrobe-item .wi-desc { color: var(--text-dim); font-size: 0.38rem; }
+
+/* ── COMMAND BAR (bottom) ── */
+#command-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 56px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--synth-pink);
+  z-index: 150;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px;
+}
+.cmd-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem; letter-spacing: 2px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  padding: 6px 14px;
+  cursor: pointer; pointer-events: all;
+  transition: all 0.15s;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.cmd-btn:hover {
+  color: var(--synth-cyan);
+  border-color: var(--synth-cyan);
+  box-shadow: var(--glow-cyan);
+}
+.cmd-btn.active {
+  color: var(--synth-pink);
+  border-color: var(--synth-pink);
+}
+
+#cmd-input {
+  flex: 1;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-body);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  padding: 8px 12px;
+  outline: none;
+  caret-color: var(--synth-pink);
+  pointer-events: all;
+  border-radius: 2px;
+}
+#cmd-input:focus { border-color: var(--synth-cyan); }
+#cmd-input::placeholder { color: rgba(106,106,138,0.4); }
+
+#pulse-indicator {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem; letter-spacing: 2px;
+  color: var(--synth-pink);
+  animation: pulse-text 2s ease-in-out infinite;
+}
+
+@keyframes pulse-text { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes pulse-border { 0%,100%{border-color:var(--synth-cyan)} 50%{border-color:transparent} }
+@keyframes fadeIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+
+/* ── DETAIL OVERLAY ── */
+#detail-overlay {
+  position: fixed;
+  inset: 0; z-index: 200;
+  background: rgba(5,5,15,0.9);
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+  pointer-events: all;
+}
+#detail-overlay.open { display: flex; }
+#detail-card {
+  background: var(--bg-panel);
+  border: 2px solid var(--synth-cyan);
+  padding: 24px; max-width: 400px; width: 90%;
+  box-shadow: 0 0 40px rgba(0,229,255,0.2);
+  border-radius: 4px;
+}
+#detail-emoji { font-size: 4rem; text-align: center; margin-bottom: 12px; }
+#detail-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem; letter-spacing: 4px;
+  text-align: center; margin-bottom: 8px;
+}
+#detail-voice {
+  font-size: 0.55rem; color: var(--text-dim);
+  text-align: center; font-style: italic;
+  margin-bottom: 16px; line-height: 1.6;
+}
+#detail-meta {
+  font-size: 0.48rem; color: var(--text-dim);
+  line-height: 2;
+}
+#detail-meta strong { color: var(--synth-cyan); }
+#detail-close {
+  margin-top: 16px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem; letter-spacing: 3px;
+  color: var(--synth-pink);
+  background: transparent;
+  border: 1px solid var(--synth-pink);
+  padding: 8px 20px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.15s;
+}
+#detail-close:hover { box-shadow: var(--glow-pink); }
+
+/* ── WIG SELECTOR ── */
+#wig-selector {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: var(--bg-panel);
+  border: 2px solid var(--synth-purple);
+  padding: 16px;
+  z-index: 250;
+  display: none;
+  flex-direction: column; gap: 6px;
+  max-width: 280px; width: 90%;
+  border-radius: 4px;
+  box-shadow: 0 0 30px rgba(181,55,242,0.2);
+}
+#wig-selector.open { display: flex; }
+#wig-selector h4 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem; letter-spacing: 3px;
+  color: var(--synth-purple);
+  margin-bottom: 4px;
+}
+.wig-option {
+  font-size: 0.5rem; padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer; transition: all 0.15s;
+}
+.wig-option:hover { border-color: var(--synth-purple); }
+.wig-cancel {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.45rem; letter-spacing: 2px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  padding: 6px;
+  cursor: pointer; margin-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-header">
+    <div class="hud-title">SYRAX INTELLIGENCE</div>
+    <div class="hud-stats">
+      AGENTS <em id="agent-count">0</em> &nbsp;|&nbsp;
+      EVENTS <em id="event-count">0</em> &nbsp;|&nbsp;
+      UPTIME <em id="uptime">00:00</em><br>
+      SESSION <em id="session-id">---</em> &nbsp;|&nbsp;
+      "ALL OR ANY"
+    </div>
+  </div>
+</div>
+
+<!-- AGENT CARDS -->
+<div id="agent-panel"></div>
+
+<!-- EVENTS FEED -->
+<div id="events-panel">
+  <div id="events-header">
+    SWARM MEMORY
+    <span style="font-size:0.4rem;">▼</span>
+  </div>
+  <div id="events-feed">
+    <div class="event-line pulse">
+      <span class="ev-time">---</span>
+      <span class="ev-agent">SYSTEM</span>
+      <span class="ev-desc">Awaiting swarm ignition...</span>
+    </div>
+  </div>
+</div>
+
+<!-- WARDROBE DRAWER -->
+<div id="wardrobe-panel">
+  <div id="wardrobe-header" onclick="toggleWardrobe()">
+    👗 THE WARDROBE — COSTUMES, MASKS, JEWELRY, MAKEUP, WIGS
+    <span id="wardrobe-chevron">▲</span>
+  </div>
+  <div id="wardrobe-grid"></div>
+</div>
+
+<!-- COMMAND BAR -->
+<div id="command-bar">
+  <button class="cmd-btn active" onclick="toggleHeartbeat()" id="btn-heartbeat">♥ PULSE</button>
+  <button class="cmd-btn" onclick="dispatchHats()">🎩 HATS</button>
+  <button class="cmd-btn" onclick="dispatchCrawlers()">🕷️ CRAWL</button>
+  <button class="cmd-btn" onclick="dispatchSin6()">💀 SIN6</button>
+  <button class="cmd-btn" onclick="conveneBoardroom()">👑 BOARD</button>
+  <button class="cmd-btn" onclick="triggerChaos()">☠ CHAOS</button>
+  <button class="cmd-btn" onclick="triggerRoulette()">🎰 ROULETTE</button>
+  <button class="cmd-btn" onclick="showSmugGestions()">📋 SMUG</button>
+  <button class="cmd-btn" onclick="dispatchNME()">🎤 NME</button>
+  <button class="cmd-btn" onclick="runOptimizer()">🔧 FIX</button>
+  <button class="cmd-btn" onclick="toggleWardrobe()">👗 WARD</button>
+  <button class="cmd-btn" onclick="dispatchGrim()">💀 GRIM</button>
+  <button class="cmd-btn" onclick="dispatchHunter()">🏹 HUNT</button>
+  <button class="cmd-btn" onclick="dispatchWatcher()">⏳ WATCH</button>
+  <button class="cmd-btn" onclick="dispatchRinger()">🪞 RING</button>
+  <button class="cmd-btn" onclick="runMorningProtocol()">🌅 AM</button>
+  <button class="cmd-btn" onclick="runMeatsuitRunDown()">👤 MRD</button>
+  <button class="cmd-btn" onclick="fullSpectrumMode()" style="color:#ffd700;border-color:#ffd700;font-weight:bold;">🌌 SPECTRUM</button>
+  <input id="cmd-input" type="text" placeholder="speak to the swarm..." autocomplete="off" spellcheck="false"
+    onkeydown="if(event.key==='Enter')sendCommand()" />
+  <span id="pulse-indicator">● LIVE</span>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div id="detail-overlay" onclick="this.classList.remove('open')">
+  <div id="detail-card" onclick="event.stopPropagation()">
+    <div id="detail-emoji"></div>
+    <div id="detail-name"></div>
+    <div id="detail-voice"></div>
+    <div id="detail-meta"></div>
+    <button id="detail-close" onclick="closeDetail()">CLOSE</button>
+  </div>
+</div>
+
+<!-- WIG SELECTOR -->
+<div id="wig-selector">
+  <h4>🎭 EQUIP WIG</h4>
+  <div id="wig-options"></div>
+  <button class="wig-cancel" onclick="closeWigSelector()">CANCEL</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// SYRAX INTELLIGENCE — SWARM DASHBOARD CLIENT
+// ═══════════════════════════════════════════════════════════
+
+const socket = io();
+const S = {
+  agents: [],
+  events: [],
+  wardrobe: {},
+  heartbeatOn: true,
+  selectedAgent: null,
+  wigTarget: null,
+  eventCount: 0,
+  uptime: 0,
+  sessionId: '---',
+};
+
+// ═══════════════════════════════════════════════════════════
+// THREE.JS 3D SWARM VISUALIZATION
+// ═══════════════════════════════════════════════════════════
+
+let scene, camera, renderer;
+let swarmOrbit = [];       // orbiting particles
+let centralCore;           // the pulsing core
+let agentMeshes = {};      // agent-specific 3D objects
+const clock = new THREE.Clock();
+
+function initThree() {
+  const container = document.getElementById('canvas-container');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x05050f);
+  scene.fog = new THREE.FogExp2(0x05050f, 0.015);
+
+  camera = new THREE.PerspectiveCamera(60, container.clientWidth/container.clientHeight, 0.1, 50);
+  camera.position.set(0, 0.5, 8);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0x1a1a3a, 0.4));
+  const point1 = new THREE.PointLight(0xff2d95, 1.2, 15);
+  point1.position.set(3, 2, 4); scene.add(point1);
+  const point2 = new THREE.PointLight(0x00e5ff, 1.0, 15);
+  point2.position.set(-3, -1, 4); scene.add(point2);
+  const point3 = new THREE.PointLight(0xb537f2, 0.6, 10);
+  point3.position.set(0, 3, 2); scene.add(point3);
+
+  buildCore();
+  buildOrbitRing();
+  buildStarfield();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth/container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+
+  animate();
+}
+
+function buildCore() {
+  // Central pulsating core — the swarm's heart
+  const coreGeo = new THREE.IcosahedronGeometry(0.28, 2);
+  const coreMat = new THREE.MeshPhongMaterial({
+    color: 0xff2d95, emissive: 0x330011,
+    wireframe: false, transparent: true, opacity: 0.85,
+  });
+  centralCore = new THREE.Mesh(coreGeo, coreMat);
+  scene.add(centralCore);
+
+  // Wireframe outer shell
+  const shellGeo = new THREE.IcosahedronGeometry(0.45, 2);
+  const shellMat = new THREE.MeshBasicMaterial({
+    color: 0x00e5ff, wireframe: true,
+    transparent: true, opacity: 0.25,
+  });
+  const shell = new THREE.Mesh(shellGeo, shellMat);
+  centralCore.add(shell);
+  centralCore.userData.shell = shell;
+
+  // Core glow sprite
+  const glowCanvas = document.createElement('canvas');
+  glowCanvas.width = 128; glowCanvas.height = 128;
+  const gctx = glowCanvas.getContext('2d');
+  const grad = gctx.createRadialGradient(64,64,0,64,64,64);
+  grad.addColorStop(0, 'rgba(255,45,149,0.8)');
+  grad.addColorStop(0.3, 'rgba(181,55,242,0.4)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  gctx.fillStyle = grad; gctx.fillRect(0,0,128,128);
+  const glowTex = new THREE.CanvasTexture(glowCanvas);
+  const glowMat = new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false });
+  const glow = new THREE.Sprite(glowMat);
+  glow.scale.set(3, 3, 1);
+  centralCore.add(glow);
+  centralCore.userData.glow = glow;
+}
+
+function buildOrbitRing() {
+  // Create 3 orbital rings at different tilts
+  const ringColors = [0xff2d95, 0x00e5ff, 0xb537f2];
+  const ringTilts = [
+    { rx: Math.PI/2, rz: 0 },
+    { rx: Math.PI/3, rz: Math.PI/4 },
+    { rx: Math.PI/2.5, rz: -Math.PI/3 },
+  ];
+  const radii = [1.8, 2.5, 3.2];
+
+  ringTilts.forEach((tilt, ri) => {
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * Math.PI * 2;
+      const r = radii[ri] + (Math.random() - 0.5) * 0.3;
+      const geo = new THREE.SphereGeometry(0.03 + Math.random() * 0.03, 4, 4);
+      const mat = new THREE.MeshBasicMaterial({
+        color: ringColors[ri],
+        transparent: true, opacity: 0.3 + Math.random() * 0.4,
+      });
+      const dot = new THREE.Mesh(geo, mat);
+      dot.position.set(Math.cos(angle) * r, (Math.random() - 0.5) * 0.4, Math.sin(angle) * r);
+      const orbitGroup = new THREE.Group();
+      orbitGroup.rotation.set(tilt.rx, 0, tilt.rz);
+      orbitGroup.add(dot);
+      scene.add(orbitGroup);
+      swarmOrbit.push({
+        group: orbitGroup,
+        dot,
+        ri,
+        baseAngle: angle,
+        radius: r,
+        speed: 0.3 + Math.random() * 0.5,
+        yOsc: Math.random() * Math.PI * 2,
+      });
+    }
+  });
+}
+
+function buildStarfield() {
+  const starsGeo = new THREE.BufferGeometry();
+  const starCount = 400;
+  const positions = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i++) {
+    positions[i*3] = (Math.random() - 0.5) * 20;
+    positions[i*3+1] = (Math.random() - 0.5) * 12;
+    positions[i*3+2] = (Math.random() - 0.5) * 15 - 3;
+  }
+  starsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const starsMat = new THREE.PointsMaterial({
+    color: 0x6666aa, size: 0.02,
+    transparent: true, blending: THREE.AdditiveBlending,
+  });
+  const stars = new THREE.Points(starsGeo, starsMat);
+  scene.add(stars);
+  S.stars = stars;
+}
+
+function buildAgentMesh(agent) {
+  // Each agent gets a glowing geometric body orbiting the core
+  const group = new THREE.Group();
+
+  // Body geometry
+  const bodyGeo = new THREE.OctahedronGeometry(0.15, 0);
+  const bodyMat = new THREE.MeshPhongMaterial({
+    color: agent.color || '#ff2d95',
+    emissive: agent.color || '#ff2d95',
+    emissiveIntensity: 0.4,
+    transparent: true, opacity: 0.8,
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  group.add(body);
+
+  // Emoji label sprite
+  const labelCanvas = document.createElement('canvas');
+  labelCanvas.width = 64; labelCanvas.height = 64;
+  const lctx = labelCanvas.getContext('2d');
+  lctx.font = '44px sans-serif';
+  lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
+  lctx.fillText(agent.emoji || '?', 32, 32);
+  const labelTex = new THREE.CanvasTexture(labelCanvas);
+  const labelMat = new THREE.SpriteMaterial({ map: labelTex, depthWrite: false, transparent: true });
+  const label = new THREE.Sprite(labelMat);
+  label.scale.set(0.35, 0.35, 1);
+  label.position.y = 0.25;
+  group.add(label);
+
+  // Orbit ring
+  const ringGeo = new THREE.TorusGeometry(0.22, 0.012, 8, 16);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: agent.color || '#ff2d95',
+    transparent: true, opacity: 0.5,
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2;
+  group.add(ring);
+
+  // Random orbit parameters
+  const orbitRadius = 1.5 + Math.random() * 3.0;
+  const orbitSpeed = 0.2 + Math.random() * 0.6;
+  const orbitPhase = Math.random() * Math.PI * 2;
+  const orbitTilt = (Math.random() - 0.5) * Math.PI * 0.8;
+  const yOffset = (Math.random() - 0.5) * 1.5;
+
+  group.userData = {
+    agentId: agent.id,
+    orbitRadius, orbitSpeed, orbitPhase, orbitTilt, yOffset,
+    body, ring,
+  };
+
+  scene.add(group);
+  agentMeshes[agent.id] = group;
+}
+
+function removeAgentMesh(agentId) {
+  if (agentMeshes[agentId]) {
+    scene.remove(agentMeshes[agentId]);
+    delete agentMeshes[agentId];
+  }
+}
+
+function highlightAgentMesh(agentId) {
+  Object.entries(agentMeshes).forEach(([id, mesh]) => {
+    const body = mesh.userData.body;
+    if (body) {
+      body.material.emissiveIntensity = id === agentId ? 1.2 : 0.4;
+      body.scale.setScalar(id === agentId ? 1.6 : 1.0);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  // Core pulse
+  if (centralCore) {
+    const pulse = 1 + Math.sin(t * 2.5) * 0.12 + Math.sin(t * 7) * 0.04;
+    centralCore.scale.setScalar(pulse);
+    centralCore.rotation.y += 0.008;
+    centralCore.rotation.x += 0.003;
+    if (centralCore.userData.shell) {
+      centralCore.userData.shell.rotation.y -= 0.012;
+    }
+    if (centralCore.userData.glow) {
+      centralCore.userData.glow.material.opacity = 0.5 + Math.sin(t * 3) * 0.25;
+    }
+  }
+
+  // Orbit particles
+  swarmOrbit.forEach(o => {
+    o.group.rotation.y += o.speed * 0.015;
+    o.dot.position.y += Math.sin(t * 1.5 + o.yOsc) * 0.002;
+  });
+
+  // Agent meshes orbit
+  Object.entries(agentMeshes).forEach(([id, mesh]) => {
+    const u = mesh.userData;
+    const angle = u.orbitPhase + t * u.orbitSpeed;
+    mesh.position.x = Math.cos(angle) * u.orbitRadius;
+    mesh.position.z = Math.sin(angle) * u.orbitRadius;
+    mesh.position.y = u.yOffset + Math.sin(t * 0.7 + u.orbitPhase) * 0.3;
+    mesh.rotation.y += 0.02;
+    mesh.rotation.x += 0.01;
+  });
+
+  // Stars slowly rotate
+  if (S.stars) S.stars.rotation.y += 0.0003;
+
+  renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════════════════
+// UI UPDATES
+// ═══════════════════════════════════════════════════════════
+
+function updateAgentPanel(agents) {
+  const panel = document.getElementById('agent-panel');
+  panel.innerHTML = agents.map(a => `
+    <div class="agent-card" data-agent="${a.agent_id}"
+         style="border-left: 3px solid ${a.color || '#ff2d95'};"
+         onclick="selectAgent('${a.agent_id}')"
+         ondblclick="openDetail('${a.agent_id}')"
+         oncontextmenu="event.preventDefault();openWigSelector('${a.agent_id}')">
+      <div class="ac-top">
+        <span class="ac-emoji">${a.emoji || '?'}</span>
+        <span class="ac-name" style="color:${a.color}">${a.costume_name?.substring(0,16) || a.agent_id}</span>
+        <span class="ac-status ${a.status}">${a.status || 'idle'}</span>
+      </div>
+      <div class="ac-detail">
+        🧠 <span>${a.mask_name || '---'}</span> &nbsp;
+        ${a.jewelry_emojis || ''}<br>
+        💄 ${a.makeup || 'bare'} &nbsp;
+        ${a.wig ? '🎭 '+a.wig : ''}<br>
+        🌡️ ${(a.temperature||0).toFixed(2)} &nbsp; 💓 ${a.pulse_count||0}
+      </div>
+    </div>
+  `).join('');
+}
+
+function addEvent(ev) {
+  const feed = document.getElementById('events-feed');
+  const line = document.createElement('div');
+  line.className = `event-line ${ev.event_type || 'pulse'}`;
+  const time = (ev.timestamp || '').slice(11, 19) || new Date().toTimeString().slice(0,8);
+  line.innerHTML = `
+    <span class="ev-time">${time}</span>
+    <span class="ev-agent">${ev.agent_id || 'SWARM'}</span>
+    <span class="ev-desc">${ev.description || ev.action || ''}</span>
+  `;
+  feed.insertBefore(line, feed.firstChild);
+  if (feed.children.length > 80) feed.removeChild(feed.lastChild);
+  S.eventCount++;
+  document.getElementById('event-count').textContent = S.eventCount;
+}
+
+function updateWardrobe(wardrobe) {
+  const grid = document.getElementById('wardrobe-grid');
+  let html = '';
+  if (wardrobe.costumes) {
+    html += '<div style="grid-column:1/-1;font-family:Orbitron;font-size:0.5rem;color:var(--synth-pink);letter-spacing:2px;">👔 COSTUMES</div>';
+    wardrobe.costumes.forEach(c => {
+      html += `<div class="wardrobe-item" style="border-left:3px solid ${c.color};" onclick="showCostume('${c.id}')">
+        <div class="wi-emoji">${c.emoji}</div>
+        <div class="wi-name" style="color:${c.color}">${c.name}</div>
+      </div>`;
+    });
+  }
+  if (wardrobe.masks) {
+    html += '<div style="grid-column:1/-1;font-family:Orbitron;font-size:0.5rem;color:var(--synth-purple);letter-spacing:2px;">🎭 MASKS</div>';
+    wardrobe.masks.forEach(m => {
+      html += `<div class="wardrobe-item">
+        <div class="wi-emoji">${m.emoji}</div>
+        <div class="wi-name">${m.name}</div>
+      </div>`;
+    });
+  }
+  if (wardrobe.jewelry) {
+    html += '<div style="grid-column:1/-1;font-family:Orbitron;font-size:0.5rem;color:var(--synth-gold);letter-spacing:2px;">💎 JEWELRY</div>';
+    wardrobe.jewelry.forEach(j => {
+      html += `<div class="wardrobe-item">
+        <div class="wi-emoji">${j.emoji}</div>
+        <div class="wi-name">${j.name}</div>
+      </div>`;
+    });
+  }
+  if (wardrobe.makeup) {
+    html += '<div style="grid-column:1/-1;font-family:Orbitron;font-size:0.5rem;color:var(--synth-cyan);letter-spacing:2px;">💄 MAKEUP</div>';
+    wardrobe.makeup.forEach(m => {
+      html += `<div class="wardrobe-item">
+        <div class="wi-emoji">${m.emoji}</div>
+        <div class="wi-name">${m.name}</div>
+      </div>`;
+    });
+  }
+  if (wardrobe.wigs) {
+    html += '<div style="grid-column:1/-1;font-family:Orbitron;font-size:0.5rem;color:var(--synth-purple);letter-spacing:2px;">👱 WIGS</div>';
+    wardrobe.wigs.forEach(w => {
+      html += `<div class="wardrobe-item">
+        <div class="wi-emoji">${w.emoji}</div>
+        <div class="wi-name">${w.name}</div>
+      </div>`;
+    });
+  }
+  grid.innerHTML = html;
+}
+
+function openDetail(agentId) {
+  const agent = S.agents.find(a => a.agent_id === agentId);
+  if (!agent) return;
+  document.getElementById('detail-emoji').textContent = agent.emoji || '?';
+  document.getElementById('detail-name').textContent = agent.costume_name || agent.agent_id;
+  document.getElementById('detail-name').style.color = agent.color;
+  document.getElementById('detail-voice').textContent = `"${agent.voice || ''}"`;
+  document.getElementById('detail-meta').innerHTML = `
+    <strong>Domain:</strong> ${agent.domain || '---'}<br>
+    <strong>Mask:</strong> ${agent.mask_name || '---'}<br>
+    <strong>Jewelry:</strong> ${agent.jewelry_emojis || 'none'}<br>
+    <strong>Makeup:</strong> ${agent.makeup || 'bare'}<br>
+    <strong>Wig:</strong> ${agent.wig || 'none'}<br>
+    <strong>Temperature:</strong> ${(agent.temperature||0).toFixed(2)}<br>
+    <strong>Pulses:</strong> ${agent.pulse_count||0}<br>
+    <strong>Status:</strong> ${agent.status||'idle'}
+  `;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+
+function selectAgent(agentId) {
+  S.selectedAgent = agentId;
+  document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`[data-agent="${agentId}"]`);
+  if (card) card.classList.add('selected');
+  highlightAgentMesh(agentId);
+}
+
+function openWigSelector(agentId) {
+  S.wigTarget = agentId;
+  const agent = S.agents.find(a => a.agent_id === agentId);
+  if (!agent) return;
+  // Get all wigs from wardrobe
+  const wigs = S.wardrobe?.wigs || [];
+  const opts = document.getElementById('wig-options');
+  opts.innerHTML = wigs.map(w =>
+    `<div class="wig-option" onclick="equipWig('${agentId}', '${w.id}')">
+      ${w.emoji} ${w.name}
+    </div>`
+  ).join('');
+  document.getElementById('wig-selector').classList.add('open');
+}
+
+function closeWigSelector() {
+  document.getElementById('wig-selector').classList.remove('open');
+  S.wigTarget = null;
+}
+
+function equipWig(agentId, wigId) {
+  socket.emit('equip_wig', { agent_id: agentId, wig_id: wigId });
+  closeWigSelector();
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMMAND BUTTONS
+// ═══════════════════════════════════════════════════════════
+
+function toggleHeartbeat() {
+  S.heartbeatOn = !S.heartbeatOn;
+  const btn = document.getElementById('btn-heartbeat');
+  btn.classList.toggle('active', S.heartbeatOn);
+  btn.textContent = S.heartbeatOn ? '♥ PULSE' : '♡ STOPPED';
+  socket.emit(S.heartbeatOn ? 'start_heartbeat' : 'stop_heartbeat');
+}
+
+function triggerChaos() {
+  socket.emit('chaos_mode');
+  // Flash effect
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#ff2d95';
+  setTimeout(() => { document.body.style.background = ''; }, 150);
+}
+
+function triggerRoulette() {
+  socket.emit('wardrobe_roulette');
+  // Spin effect — rapid color cycling
+  const colors = ['#ff2d95', '#00e5ff', '#b537f2', '#ffb347', '#39ff14', '#ff6d00', '#aaccff'];
+  let i = 0;
+  const spin = setInterval(() => {
+    document.body.style.transition = 'background 0.05s';
+    document.body.style.background = colors[i % colors.length];
+    i++;
+  }, 60);
+  setTimeout(() => { clearInterval(spin); document.body.style.background = ''; document.body.style.transition = ''; }, 600);
+}
+
+function runOptimizer() {
+  socket.emit('run_optimizer', { target: '.', auto_fix: false });
+}
+
+function propagateSeed() {
+  socket.emit('propagate_seed', { target_path: '/tmp/synrax_node' });
+}
+
+function dispatchHats() {
+  socket.emit('dispatch_hats', { topic: 'strategic review' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#ffd700';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function dispatchCrawlers() {
+  socket.emit('dispatch_crawlers', { domain: 'all' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#39ff14';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function dispatchSin6() {
+  socket.emit('dispatch_sin6', { mission: 'recon' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#1a1a2e';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function dispatchNME() {
+  socket.emit('dispatch_nme', { target: 'the whole codebase' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#ff0044';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function conveneBoardroom() {
+  socket.emit('boardroom_convene', { topic: 'strategic review' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#ffd700';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 300);
+}
+
+// ═══════════════════════════════════════════
+// EXPANDED AGENTS — Grim, Hunter, Watcher, Ringer
+// ═══════════════════════════════════════════
+
+function dispatchGrim() {
+  socket.emit('dispatch_grim', { target: 'duplicates' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#111111';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function dispatchHunter() {
+  socket.emit('dispatch_hunter', { target: 'the target' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#cc4400';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function dispatchWatcher() {
+  socket.emit('dispatch_watcher', { duration_hours: 24 });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#4488cc';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+function dispatchRinger() {
+  socket.emit('dispatch_ringer', { target_agent_id: 'elite-chairman', target_system: 'red-team' });
+  document.body.style.transition = 'background 0.1s';
+  document.body.style.background = '#aa88ff';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 200);
+}
+
+// ═══════════════════════════════════════════
+// MORNING PROTOCOL & MEATSUIT RUNDOWN
+// ═══════════════════════════════════════════
+
+function runMorningProtocol() {
+  socket.emit('morning_protocol');
+  document.body.style.transition = 'background 0.2s';
+  document.body.style.background = '#ff8c00';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 400);
+}
+
+function runMeatsuitRunDown() {
+  socket.emit('meatsuit_rundown');
+  document.body.style.transition = 'background 0.2s';
+  document.body.style.background = '#8b5e3c';
+  setTimeout(() => { document.body.style.background = ''; document.body.style.transition = ''; }, 400);
+}
+
+function showSmugGestions() {
+  socket.emit('smug_gestions');
+}
+
+// ═══════════════════════════════════════════
+// FULL SPECTRUM MODE
+// ═══════════════════════════════════════════
+
+function fullSpectrumMode() {
+  socket.emit('full_spectrum');
+  // Dramatic rainbow pulse
+  const colors = ['#ff2d95','#ff6600','#ffd700','#39ff14','#00e5ff','#4488ff','#b537f2','#111111','#ffffff'];
+  let i = 0;
+  const pulse = setInterval(() => {
+    document.body.style.transition = 'background 0.08s';
+    document.body.style.background = colors[i % colors.length];
+    i++;
+  }, 80);
+  setTimeout(() => { clearInterval(pulse); document.body.style.background = ''; document.body.style.transition = ''; }, 2000);
+}
+
+function sendCommand() {
+  const inp = document.getElementById('cmd-input');
+  const cmd = inp.value.trim();
+  if (!cmd) return;
+  socket.emit('swarm_command', { command: cmd });
+  inp.value = '';
+  addEvent({
+    event_type: 'action',
+    agent_id: 'OPERATOR',
+    description: `> ${cmd}`,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+function toggleWardrobe() {
+  const panel = document.getElementById('wardrobe-panel');
+  panel.classList.toggle('open');
+  document.getElementById('wardrobe-chevron').textContent =
+    panel.classList.contains('open') ? '▼' : '▲';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SOCKET EVENTS
+// ═══════════════════════════════════════════════════════════
+
+socket.on('connect', () => {
+  addEvent({ event_type: 'pulse', agent_id: 'BRIDGE', description: 'Connected to Synrax server' });
+});
+
+socket.on('swarm_update', (data) => {
+  S.agents = data.agents || [];
+  S.wardrobe = data.wardrobe || {};
+  S.sessionId = data.session_id || '---';
+  S.uptime = data.uptime_seconds || 0;
+
+  document.getElementById('agent-count').textContent = S.agents.length;
+  document.getElementById('session-id').textContent = S.sessionId;
+  const m = Math.floor(S.uptime / 60);
+  const s = Math.floor(S.uptime % 60);
+  document.getElementById('uptime').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+
+  updateAgentPanel(S.agents);
+
+  // Build/update 3D meshes
+  const existingIds = new Set(Object.keys(agentMeshes));
+  const liveIds = new Set(S.agents.map(a => a.agent_id));
+
+  // Remove gone agents
+  existingIds.forEach(id => { if (!liveIds.has(id)) removeAgentMesh(id); });
+
+  // Add new agents
+  S.agents.forEach(a => {
+    if (!agentMeshes[a.agent_id]) {
+      buildAgentMesh({
+        id: a.agent_id,
+        emoji: a.emoji,
+        color: a.color || '#ff2d95',
+      });
+    }
+  });
+
+  updateWardrobe(S.wardrobe);
+});
+
+socket.on('swarm_event', (ev) => {
+  addEvent(ev);
+});
+
+socket.on('agent_detail', (agent) => {
+  openDetail(agent.agent_id);
+});
+
+// ═══════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  switch(e.key.toLowerCase()) {
+    case 'c': triggerChaos(); break;
+    case 'r': triggerRoulette(); break;
+    case 'w': toggleWardrobe(); break;
+    case 'h': dispatchHats(); break;
+    case 'k': dispatchCrawlers(); break;
+    case 's': dispatchSin6(); break;
+    case 'b': conveneBoardroom(); break;
+    case 'n': dispatchNME(); break;
+    case 'm': runMorningProtocol(); break;
+    case 'd': runMeatsuitRunDown(); break;
+    case 'f': fullSpectrumMode(); break;
+    case 'g': dispatchGrim(); break;
+    case 'escape': closeDetail(); closeWigSelector(); break;
+    case '/': document.getElementById('cmd-input').focus(); e.preventDefault(); break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+
+window.addEventListener('load', () => {
+  initThree();
+  addEvent({ event_type: 'pulse', agent_id: 'SYRAX', description: 'SYNRAX INTELLIGENCE ONLINE' });
+});
+</script>
+</body>
+</html>

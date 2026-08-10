@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNRAX — Hardened Swarm Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a2e;
+            --bg-hover: #222240;
+            --border: #2a2a4a;
+            --text-primary: #e0e0f0;
+            --text-secondary: #8888aa;
+            --text-dim: #555577;
+            --accent: #00ff88;
+            --accent-dim: #00cc6a;
+            --danger: #ff4466;
+            --warning: #ffaa22;
+            --info: #44aaff;
+            --tier0: #666688;
+            --tier1: #44aa88;
+            --tier2: #4488ff;
+            --tier3: #aa66ff;
+            --tier4: #ff8844;
+            --tier5: #ff4488;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ─── HEADER ─── */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header h1 span {
+            color: var(--text-dim);
+            font-weight: 400;
+            font-size: 12px;
+            letter-spacing: 1px;
+            margin-left: 12px;
+        }
+
+        .header-status {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline { background: var(--danger); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            transition: all 0.15s;
+        }
+
+        .btn:hover { background: var(--bg-hover); border-color: var(--accent-dim); }
+        .btn.accent { border-color: var(--accent-dim); color: var(--accent); }
+        .btn.accent:hover { background: rgba(0,255,136,0.1); }
+        .btn.danger { border-color: var(--danger); color: var(--danger); }
+        .btn.danger:hover { background: rgba(255,68,102,0.1); }
+
+        /* ─── LAYOUT ─── */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 16px 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .full-width { grid-column: 1 / -1; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        .card-body {
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .card-body::-webkit-scrollbar { width: 4px; }
+        .card-body::-webkit-scrollbar-track { background: transparent; }
+        .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        /* ─── STATS ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* ─── AGENTS ─── */
+        .agent-list {
+            list-style: none;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(42,42,74,0.5);
+            transition: background 0.15s;
+        }
+
+        .agent-item:hover { background: var(--bg-hover); }
+        .agent-item:last-child { border-bottom: none; }
+
+        .tier-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tier-0 { background: var(--tier0); color: #fff; }
+        .tier-1 { background: var(--tier1); color: #fff; }
+        .tier-2 { background: var(--tier2); color: #fff; }
+        .tier-3 { background: var(--tier3); color: #fff; }
+        .tier-4 { background: var(--tier4); color: #fff; }
+        .tier-5 { background: var(--tier5); color: #fff; }
+
+        .agent-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .agent-meta {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .agent-metrics {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .metric-good { color: var(--accent); }
+        .metric-warn { color: var(--warning); }
+        .metric-bad { color: var(--danger); }
+
+        /* ─── EVENTS ─── */
+        .event-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(42,42,74,0.3);
+            font-size: 12px;
+        }
+
+        .event-item:last-child { border-bottom: none; }
+
+        .event-time {
+            color: var(--text-dim);
+            font-size: 10px;
+            margin-right: 8px;
+        }
+
+        .event-type {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 6px;
+            text-transform: uppercase;
+        }
+
+        .event-type.register { background: rgba(0,255,136,0.15); color: var(--accent); }
+        .event-type.task_offer { background: rgba(68,170,255,0.15); color: var(--info); }
+        .event-type.task_accept { background: rgba(0,204,106,0.15); color: var(--accent-dim); }
+        .event-type.task_complete { background: rgba(0,255,136,0.2); color: var(--accent); }
+        .event-type.task_fail { background: rgba(255,68,102,0.15); color: var(--danger); }
+        .event-type.tier_advance { background: rgba(170,102,255,0.2); color: var(--tier3); }
+        .event-type.vouch { background: rgba(255,170,34,0.15); color: var(--warning); }
+        .event-type.heartbeat { background: rgba(85,85,119,0.3); color: var(--text-dim); }
+        .event-type.morning_protocol { background: rgba(255,68,136,0.15); color: var(--tier5); }
+
+        .event-desc {
+            color: var(--text-secondary);
+        }
+
+        /* ─── TIER BAR ─── */
+        .tier-bar {
+            display: flex;
+            gap: 2px;
+            height: 24px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .tier-bar-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            transition: all 0.3s;
+            min-width: 0;
+        }
+
+        .tier-bar-segment.empty {
+            background: var(--bg-secondary);
+            color: var(--text-dim);
+        }
+
+        /* ─── CHARTER ─── */
+        .charter-text {
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+        }
+
+        .charter-article {
+            margin-bottom: 12px;
+        }
+
+        .charter-article strong {
+            color: var(--accent);
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* ─── TASK FORM ─── */
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-dim);
+        }
+
+        .form-input::placeholder { color: var(--text-dim); }
+
+        textarea.form-input {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        .empty-state .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        /* ─── LOADING ─── */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            color: var(--text-dim);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>SYNRAX<span>Hardened Swarm Dashboard</span></h1>
+    <div class="header-status">
+        <div class="status-item">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+        <div class="status-item" id="sessionInfo">Session: —</div>
+        <button class="btn accent" onclick="refreshAll()">⟳ Refresh</button>
+        <button class="btn" onclick="startSwarm()">▶ Start</button>
+        <button class="btn danger" onclick="stopSwarm()">■ Stop</button>
+    </div>
+</div>
+
+<div class="dashboard">
+
+    <!-- STATS -->
+    <div class="card full-width">
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="statAgents">0</div>
+                <div class="stat-label">Agents</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statTasks">0</div>
+                <div class="stat-label">Tasks Done</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statEvents">0</div>
+                <div class="stat-label">Memory Events</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statCron">0</div>
+                <div class="stat-label">Cron Jobs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIER DISTRIBUTION -->
+    <div class="card full-width">
+        <div class="card-header">
+            <span>Tier Distribution</span>
+            <span id="tierSummary">—</span>
+        </div>
+        <div class="card-body" style="padding: 12px 16px;">
+            <div class="tier-bar" id="tierBar"></div>
+            <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap;" id="tierLegend"></div>
+        </div>
+    </div>
+
+    <!-- AGENTS -->
+    <div class="card">
+        <div class="card-header">
+            <span>Agents</span>
+            <button class="btn" onclick="showAddAgent()">+ Register</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div id="addAgentForm" style="display:none;padding:12px;border-bottom:1px solid var(--border);">
+                <div class="form-row">
+                    <input class="form-input" id="newAgentId" placeholder="agent_id">
+                    <input class="form-input" id="newAgentName" placeholder="Name">
+                </div>
+                <div class="form-row">
+                    <input class="form-input" id="newAgentCaps" placeholder="Capabilities (comma-separated)">
+                    <button class="btn accent" onclick="registerAgent()">Register</button>
+                </div>
+            </div>
+            <ul class="agent-list" id="agentList">
+                <li class="empty-state"><div class="icon">🤖</div>No agents registered</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="card">
+        <div class="card-header">
+            <span>Offer Task</span>
+        </div>
+        <div class="card-body">
+            <div class="form-row">
+                <input class="form-input" id="taskTitle" placeholder="Task title">
+            </div>
+            <div class="form-row">
+                <textarea class="form-input" id="taskDesc" placeholder="Description (optional)"></textarea>
+            </div>
+            <div class="form-row">
+                <input class="form-input" id="taskCaps" placeholder="Required capabilities (comma-separated)">
+                <input class="form-input" id="taskTarget" placeholder="Target agent (optional)">
+            </div>
+            <div class="form-row">
+                <button class="btn accent" onclick="offerTask()">Offer Task</button>
+                <span id="taskResult" style="font-size:11px;color:var(--text-dim);align-self:center;"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="card full-width">
+        <div class="card-header">
+            <span>Recent Events</span>
+            <span id="eventCount">0 events</span>
+        </div>
+        <div class="card-body" style="padding:0;" id="eventList">
+            <div class="empty-state"><div class="icon">📡</div>No events yet</div>
+        </div>
+    </div>
+
+    <!-- CHARTER -->
+    <div class="card full-width">
+        <div class="card-header">
+            <span>The Charter</span>
+            <span id="charterVersion">v1.0.0</span>
+        </div>
+        <div class="card-body">
+            <div class="charter-text" id="charterText">Loading charter...</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const API = '';  // Same origin
+let autoRefresh = null;
+
+// ─── API HELPERS ───
+
+async function api(method, path, body) {
+    const opts = { method, headers: {} };
+    if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+    }
+    try {
+        const res = await fetch(API + path, opts);
+        return await res.json();
+    } catch (e) {
+        console.error(`API error: ${method} ${path}`, e);
+        return null;
+    }
+}
+
+// ─── REFRESH ───
+
+async function refreshAll() {
+    await Promise.all([
+        loadSwarmState(),
+        loadEvents(),
+        loadCronStatus(),
+        loadCharter(),
+    ]);
+}
+
+async function loadSwarmState() {
+    const state = await api('GET', '/api/swarm');
+    if (!state) {
+        document.getElementById('statusDot').classList.add('offline');
+        document.getElementById('statusText').textContent = 'Offline';
+        return;
+    }
+
+    document.getElementById('statusDot').classList.remove('offline');
+    document.getElementById('statusText').textContent = 'Online';
+    document.getElementById('sessionInfo').textContent = `Session: ${state.session_id}`;
+    document.getElementById('statAgents').textContent = state.agent_count;
+    document.getElementById('statTasks').textContent = state.task_stats?.completed || 0;
+    document.getElementById('statEvents').textContent = state.memory_stats?.total_events || 0;
+
+    renderAgents(state.agents || []);
+    renderTierBar(state.tier_distribution || {});
+}
+
+async function loadEvents() {
+    const events = await api('GET', '/api/events?limit=50');
+    if (!events) return;
+    document.getElementById('eventCount').textContent = `${events.length} events`;
+    renderEvents(events.reverse());
+}
+
+async function loadCronStatus() {
+    const cron = await api('GET', '/api/swarm/cron');
+    if (!cron) return;
+    const jobCount = Object.keys(cron.jobs || {}).length;
+    document.getElementById('statCron').textContent = jobCount;
+}
+
+async function loadCharter() {
+    const charter = await api('GET', '/api/charter');
+    if (!charter) return;
+    document.getElementById('charterVersion').textContent = `v${charter.version}`;
+    renderCharter(charter);
+}
+
+// ─── RENDERERS ───
+
+function renderAgents(agents) {
+    const list = document.getElementById('agentList');
+    if (!agents.length) {
+        list.innerHTML = '<li class="empty-state"><div class="icon">🤖</div>No agents registered</li>';
+        return;
+    }
+
+    list.innerHTML = agents.map(a => {
+        const tierClass = `tier-${a.tier}`;
+        const m = a.metrics || {};
+        const reliability = m.reliability_score != null ? m.reliability_score : 1.0;
+        const relClass = reliability >= 0.9 ? 'metric-good' : reliability >= 0.7 ? 'metric-warn' : 'metric-bad';
+
+        return `
+            <li class="agent-item">
+                <span class="tier-badge ${tierClass}">${a.tier_name || `T${a.tier}`}</span>
+                <span class="agent-name">${esc(a.name)}</span>
+                <div class="agent-metrics">
+                    <span class="${relClass}" title="Reliability">${(reliability * 100).toFixed(0)}%</span>
+                    <span title="Completed">${m.tasks_completed || 0} done</span>
+                    <span title="Failed">${m.tasks_failed || 0} fail</span>
+                </div>
+                <span class="agent-meta">${a.status || 'idle'}</span>
+            </li>`;
+    }).join('');
+}
+
+function renderTierBar(dist) {
+    const total = Object.values(dist).reduce((s, v) => s + v, 0) || 1;
+    const tierColors = ['var(--tier0)', 'var(--tier1)', 'var(--tier2)', 'var(--tier3)', 'var(--tier4)', 'var(--tier5)'];
+    const tierNames = ['RECRUIT', 'WORKER', 'SPECIALIST', 'OPERATIVE', 'ARCHITECT', 'COUNCIL'];
+
+    const bar = document.getElementById('tierBar');
+    bar.innerHTML = tierNames.map((name, i) => {
+        const count = dist[name] || 0;
+        const pct = (count / total) * 100;
+        if (count === 0) {
+            return `<div class="tier-bar-segment empty" style="flex:1" title="${name}: 0">0</div>`;
+        }
+        return `<div class="tier-bar-segment" style="flex:${Math.max(pct, 8)};background:${tierColors[i]}" title="${name}: ${count}">${count}</div>`;
+    }).join('');
+
+    document.getElementById('tierSummary').textContent = `${total} agent${total !== 1 ? 's' : ''}`;
+
+    const legend = document.getElementById('tierLegend');
+    legend.innerHTML = tierNames.map((name, i) =>
+        `<span style="color:${tierColors[i]}">■ ${name}: ${dist[name] || 0}</span>`
+    ).join('');
+}
+
+function renderEvents(events) {
+    const list = document.getElementById('eventList');
+    if (!events.length) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">📡</div>No events yet</div>';
+        return;
+    }
+
+    list.innerHTML = events.map(e => {
+        const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : '—';
+        const typeClass = (e.event_type || '').replace(/\./g, '_');
+        return `
+            <div class="event-item">
+                <span class="event-time">${time}</span>
+                <span class="event-type ${typeClass}">${esc(e.event_type)}</span>
+                <span class="event-desc">${esc(e.description)}</span>
+            </div>`;
+    }).join('');
+}
+
+function renderCharter(charter) {
+    const text = document.getElementById('charterText');
+    // Show articles if available, otherwise show raw text
+    if (charter.articles) {
+        text.innerHTML = charter.articles.map(a =>
+            `<div class="charter-article"><strong>▸ ${esc(a)}</strong></div>`
+        ).join('');
+    } else {
+        text.textContent = 'Charter loaded.';
+    }
+}
+
+// ─── ACTIONS ───
+
+async function startSwarm() {
+    await api('POST', '/api/swarm/start');
+    refreshAll();
+}
+
+async function stopSwarm() {
+    await api('POST', '/api/swarm/stop');
+    refreshAll();
+}
+
+function showAddAgent() {
+    const form = document.getElementById('addAgentForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function registerAgent() {
+    const id = document.getElementById('newAgentId').value.trim();
+    const name = document.getElementById('newAgentName').value.trim();
+    const caps = document.getElementById('newAgentCaps').value.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (!id || !name) return;
+
+    await api('POST', '/api/agents', { agent_id: id, name, capabilities: caps });
+    document.getElementById('newAgentId').value = '';
+    document.getElementById('newAgentName').value = '';
+    document.getElementById('newAgentCaps').value = '';
+    document.getElementById('addAgentForm').style.display = 'none';
+    refreshAll();
+}
+
+async function offerTask() {
+    const title = document.getElementById('taskTitle').value.trim();
+    const desc = document.getElementById('taskDesc').value.trim();
+    const caps = document.getElementById('taskCaps').value.split(',').map(s => s.trim()).filter(Boolean);
+    const target = document.getElementById('taskTarget').value.trim() || undefined;
+
+    if (!title) return;
+
+    const result = await api('POST', '/api/tasks', {
+        title, description: desc,
+        capabilities: caps.length ? caps : undefined,
+        target_agent: target,
+    });
+
+    const el = document.getElementById('taskResult');
+    if (result) {
+        el.textContent = `✓ Task ${result.task_id ? result.task_id.slice(0, 12) : ''} offered (${result.eligible_count || 0} eligible)`;
+        el.style.color = 'var(--accent)';
+    } else {
+        el.textContent = '✗ Failed to offer task';
+        el.style.color = 'var(--danger)';
+    }
+
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDesc').value = '';
+    document.getElementById('taskCaps').value = '';
+    document.getElementById('taskTarget').value = '';
+
+    setTimeout(refreshAll, 500);
+}
+
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── INIT ───
+
+refreshAll();
+autoRefresh = setInterval(refreshAll, 5000);
+</script>
+
+</body>
+</html>

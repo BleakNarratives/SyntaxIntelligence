@@ -1,0 +1,414 @@
+# ═══════════════════════════════════════════════════════════════
+#  HELICAL SECURITY POLICY
+#  "Every state knot has a key. Every key has a cost. Every cost
+#   is earned."
+#
+#  Project Syntax — SyntaxIntelligence Governance Layer
+#  Version 1.0.0 — Ratified 2026-08-02
+# ═══════════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────
+#  META
+# ─────────────────────────────────────────────────────────────
+
+meta:
+  version: "1.0.0"
+  ratified_at: "2026-08-02T00:00:00Z"
+  ratified_by: "Buffy (autonomous agent protocol, lead developer)"
+  supersedes: null
+  binding_on:
+    - SyntaxIntelligence (hardened_engine, event_bus, swarm_runtime)
+    - OutClaw (audit pipeline, unified orchestrator)
+    - LWS (Legal Warfare Suite core)
+    - All swarm agents operating at Tier 2 (Specialist) and above
+
+# ─────────────────────────────────────────────────────────────
+#  SUBSYSTEMS
+#
+#  Each subsystem is a security domain. Operations within a
+#  subsystem are gated by tier. Cross-subsystem operations
+#  require multi-key grants (see "state_knots" below).
+# ─────────────────────────────────────────────────────────────
+
+subsystems:
+
+  # ── Syntax Core: agent identity, task orchestration, vouch ledger ──
+  syntax_core:
+    id: "SX-001"
+    description: "Swarm charter enforcement, agent identity, task orchestration, vouch ledger"
+    primary_module: "SyntaxIntelligence/hardened_engine.py"
+    tier_floor: 1  # minimum tier to interact at all
+    operations:
+      register_agent:
+        privilege: pulse
+        tier_floor: 0
+        description: "Register a new agent identity in the swarm"
+        key_required: none
+      offer_task:
+        privilege: publish_bus
+        tier_floor: 3
+        description: "Publish a task offer to the swarm"
+        key_required: task_offer
+      accept_task:
+        privilege: accept_tasks
+        tier_floor: 1
+        description: "Accept a task from the pool"
+        key_required: task_accept
+      vouch_for_agent:
+        privilege: write_memory
+        tier_floor: 2
+        description: "Vouch for another agent's capability"
+        key_required: vouch_key
+      amend_charter:
+        privilege: amend_charter
+        tier_floor: 5
+        description: "Propose amendments to the Swarm Charter"
+        key_required: [council_majority, charter_amendment]
+      spawn_agent:
+        privilege: spawn_agent
+        tier_floor: 4
+        description: "Spawn a new agent instance"
+        key_required: spawn_key
+
+  # ── Event Bus: message routing, pub/sub, channels ──
+  event_bus:
+    id: "EB-001"
+    description: "Pub/sub event routing between subsystems and agents"
+    primary_module: "SyntaxIntelligence/event_bus.py"
+    tier_floor: 1
+    operations:
+      subscribe_channel:
+        privilege: subscribe_bus
+        tier_floor: 2
+        description: "Subscribe to an event bus channel"
+        key_required: channel_subscribe
+      publish_event:
+        privilege: publish_bus
+        tier_floor: 3
+        description: "Publish an event to a channel"
+        key_required: event_publish
+      broadcast:
+        privilege: broadcast
+        tier_floor: 4
+        description: "Broadcast a message to all agents"
+        key_required: broadcast_key
+
+  # ── Swarm Runtime: persona library, costume switching ──
+  swarm_runtime:
+    id: "SW-001"
+    description: "Agent persona management, costume switching, behavior library"
+    primary_module: "SyntaxIntelligence/swarm_launch.py"
+    tier_floor: 0
+    operations:
+      choose_persona:
+        privilege: choose_persona
+        tier_floor: 2
+        description: "Select a persona from the library"
+        key_required: persona_select
+      switch_wig:
+        privilege: switch_wig
+        tier_floor: 3
+        description: "Change persona mid-operation"
+        key_required: wig_switch
+      launch_swarm:
+        privilege: spawn_agent
+        tier_floor: 4
+        description: "Launch the full swarm constellation"
+        key_required: swarm_launch
+
+  # ── OutClaw: citation audit pipeline ──
+  outclaw_audit:
+    id: "OC-001"
+    description: "Legal citation fraud detection, semantic analysis, structural validation"
+    primary_module: "OutClaw/OutClaw_Main/outclaw_unified.py"
+    tier_floor: 2
+    operations:
+      run_audit:
+        privilege: accept_tasks
+        tier_floor: 2
+        description: "Run a citation audit on legal text"
+        key_required: audit_run
+      escalate_llm:
+        privilege: accept_tasks
+        tier_floor: 3
+        description: "Auto-escalate ambiguous findings to local LLM"
+        key_required: [audit_run, llm_escalation]
+      expand_seed:
+        privilege: write_memory
+        tier_floor: 3
+        description: "Expand the citation seed registry"
+        key_required: seed_expand
+      mark_safe_to_draft:
+        privilege: write_memory
+        tier_floor: 4
+        description: "Mark an audit report as safe to draft"
+        key_required: safe_draft
+
+  # ── LWS: Legal Warfare Suite ──
+  lws_core:
+    id: "LW-001"
+    description: "Adversarial legal strategy generation, boardroom, discovery warfare"
+    primary_module: "LWS_ROOT/core/boardroom_bridge.py"
+    tier_floor: 3
+    operations:
+      generate_discovery:
+        privilege: accept_tasks
+        tier_floor: 3
+        description: "Generate discovery warfare strategy"
+        key_required: discovery_gen
+      generate_grievance:
+        privilege: accept_tasks
+        tier_floor: 3
+        description: "Generate bar grievance package"
+        key_required: grievance_gen
+      convene_war_room:
+        privilege: publish_bus
+        tier_floor: 4
+        description: "Convene the legal war room on pending strategies"
+        key_required: [war_room_convene, boardroom_access]
+      archive_strategy:
+        privilege: write_memory
+        tier_floor: 3
+        description: "Archive a processed strategy"
+        key_required: strategy_archive
+
+  # ── Sync Bridge: cross-device message relay ──
+  sync_bridge:
+    id: "SB-001"
+    description: "Cross-device sync bus between penguin, moto4, and a9"
+    primary_module: "SyntaxIntelligence/sync_bridge.py"
+    tier_floor: 3
+    operations:
+      push_message:
+        privilege: publish_bus
+        tier_floor: 3
+        description: "Push a message to the cross-device sync bus"
+        key_required: sync_push
+      pull_messages:
+        privilege: subscribe_bus
+        tier_floor: 3
+        description: "Pull messages from the sync bus"
+        key_required: sync_pull
+      bridge_connect:
+        privilege: spawn_subtask
+        tier_floor: 4
+        description: "Establish a cross-device bridge connection"
+        key_required: bridge_connect
+      rclone_sync:
+        privilege: full_autonomy
+        tier_floor: 5
+        description: "Execute rclone sync to external device"
+        key_required: [rclone_key, bridge_connect]
+
+  # ── Legal Coordination: boardroom guidance, oversight ──
+  legal_coordination:
+    id: "LC-001"
+    description: "Syntax legal mind — boardroom oversight, guidance requests"
+    primary_module: "SyntaxIntelligence/legal_coordination.py"
+    tier_floor: 4
+    operations:
+      request_guidance:
+        privilege: publish_bus
+        tier_floor: 4
+        description: "Request boardroom guidance on a legal packet"
+        key_required: guidance_request
+      issue_guidance:
+        privilege: broadcast
+        tier_floor: 5
+        description: "Issue boardroom guidance to the swarm"
+        key_required: guidance_issue
+
+# ─────────────────────────────────────────────────────────────
+#  STATE KNOTS
+#
+#  A state knot is a protected system state change that requires
+#  multiple subsystem keys to unravel. Think multi-sig for
+#  critical operations. Each knot lists the keys (from above)
+#  that must be presented together to authorize the change.
+#
+#  Helical because keys must be presented in a specific ORDER
+#  (like a helix — each key unlocks the next) and because
+#  failed unravels leave an audit trail.
+# ─────────────────────────────────────────────────────────────
+
+state_knots:
+
+  # ── Swarm Launch: boot the full constellation ──
+  swarm_launch:
+    description: "Launch the full 21-agent swarm with red team"
+    required_keys:
+      - swarm_launch          # from swarm_runtime
+      - event_publish          # from event_bus
+    helical_order: [swarm_launch, event_publish]
+    audit_on_failure: true
+    rollback_on_failure: false  # agents self-deregister on failure
+
+  # ── Cross-Device Sync: push state to another device ──
+  cross_device_push:
+    description: "Push swarm state to a connected device (moto4, a9)"
+    required_keys:
+      - sync_push              # from sync_bridge
+      - bridge_connect         # from sync_bridge
+      - event_publish          # from event_bus
+    helical_order: [bridge_connect, sync_push, event_publish]
+    audit_on_failure: true
+    rollback_on_failure: true
+    max_retries: 3
+
+  # ── Charter Amendment: change the governance rules ──
+  charter_amendment:
+    description: "Propose and ratify a charter amendment"
+    required_keys:
+      - council_majority       # from syntax_core (requires 3+ council votes)
+      - charter_amendment      # from syntax_core
+    helical_order: [charter_amendment, council_majority]
+    audit_on_failure: true
+    rollback_on_failure: false  # amendment proposal is logged, not executed
+
+  # ── Full Audit: run complete citation audit with LLM escalation ──
+  full_legal_audit:
+    description: "Run citation audit + aura + benford + auto-escalation"
+    required_keys:
+      - audit_run              # from outclaw_audit
+      - llm_escalation         # from outclaw_audit
+      - guidance_request       # from legal_coordination
+    helical_order: [audit_run, llm_escalation, guidance_request]
+    audit_on_failure: true
+    rollback_on_failure: false
+
+  # ── War Room Convene: adversarial legal strategy session ──
+  war_room_session:
+    description: "Convene the legal war room on pending strategies"
+    required_keys:
+      - war_room_convene       # from lws_core
+      - boardroom_access        # from lws_core
+      - guidance_request       # from legal_coordination
+    helical_order: [boardroom_access, war_room_convene, guidance_request]
+    audit_on_failure: true
+    rollback_on_failure: false
+
+  # ── Agent Spawn Chain: spawn a sub-agent that spawns another ──
+  spawn_chain:
+    description: "Spawn an agent that itself spawns a sub-agent"
+    required_keys:
+      - spawn_key              # from syntax_core
+    helical_order: [spawn_key]  # recursive — each spawn checks its own key
+    audit_on_failure: true
+    rollback_on_failure: true
+    max_depth: 3  # max sub-agent nesting
+
+  # ── Seed Expansion: add new citations to the registry ──
+  seed_expansion:
+    description: "Expand the OutClaw citation seed registry"
+    required_keys:
+      - seed_expand            # from outclaw_audit
+      - write_memory           # implied by Specialist+ write_memory privilege
+    helical_order: [seed_expand]
+    audit_on_failure: true
+    rollback_on_failure: true
+
+  # ── Safe Draft: mark an audit as safe to file ──
+  safe_draft_marking:
+    description: "Mark an audit report as safe to draft and file"
+    required_keys:
+      - safe_draft             # from outclaw_audit
+      - guidance_issue         # from legal_coordination (council oversight)
+    helical_order: [safe_draft, guidance_issue]
+    audit_on_failure: true
+    rollback_on_failure: false
+    human_approval_required: true  # operator must explicitly approve
+
+# ─────────────────────────────────────────────────────────────
+#  TIER-KEY BINDING
+#
+#  Maps each tier to the set of subsystem keys that tier can
+#  present. Higher tiers inherit all keys from lower tiers.
+#  Keys are the atomic units of authorization in the helical
+#  security model.
+# ─────────────────────────────────────────────────────────────
+
+tier_key_bindings:
+  tier_0_recruit:
+    keys: [none]            # can only pulse — no keys earned
+  tier_1_worker:
+    keys: [task_accept]     # can accept tasks
+  tier_2_specialist:
+    inherits: tier_1_worker
+    keys:
+      - channel_subscribe
+      - vouch_key
+      - persona_select
+      - audit_run
+  tier_3_operative:
+    inherits: tier_2_specialist
+    keys:
+      - task_offer
+      - event_publish
+      - wig_switch
+      - llm_escalation
+      - seed_expand
+      - discovery_gen                 # LWS discovery
+      - grievance_gen                 # LWS grievance
+      - strategy_archive              # LWS archive
+      - sync_push                     # sync bus
+      - sync_pull                     # sync bus
+  tier_4_architect:
+    inherits: tier_3_operative
+    keys:
+      - broadcast_key
+      - spawn_key
+      - swarm_launch
+      - safe_draft
+      - war_room_convene
+      - boardroom_access
+      - bridge_connect
+      - guidance_request
+  tier_5_council:
+    inherits: tier_4_architect
+    keys:
+      - council_majority
+      - charter_amendment
+      - rclone_key
+      - guidance_issue
+
+# ─────────────────────────────────────────────────────────────
+#  AUDIT TRAIL
+#
+#  Every key presentation attempt — success or failure — is
+#  logged with: timestamp, agent_id, tier, key_attempted,
+#  state_knot (if applicable), result, and the helical sequence
+#  position. This makes state theft worthless: you cannot
+#  replay an audit log entry to re-unlock a knot.
+# ─────────────────────────────────────────────────────────────
+
+audit_trail:
+  enabled: true
+  log_path: "SyntaxIntelligence/logs/security_audit.jsonl"
+  retention_days: 90
+  fields:
+    - timestamp
+    - agent_id
+    - agent_tier
+    - key_attempted
+    - keys_presented         # all keys in the helical sequence so far
+    - state_knot             # null for single-key operations
+    - helical_position       # which position in the sequence (1-based)
+    - result                 # "granted" | "denied_tier" | "denied_key" | "denied_order"
+    - reason                 # human-readable denial reason
+
+# ─────────────────────────────────────────────────────────────
+#  EMERGENCY OVERRIDE
+#
+#  The operator (human) can override any key requirement in
+#  an emergency. Overrides are logged with the operator's
+#  reason and are auditable by the Council. Override does
+#  not bypass the audit trail — it just authorizes the key
+#  presentation as if the operator held all keys.
+# ─────────────────────────────────────────────────────────────
+
+emergency_override:
+  enabled: true
+  require_reason: true
+  max_duration_minutes: 60    # override expires after 1 hour
+  audit_on_override: true
+  council_notification: true  # notify all Council agents on override

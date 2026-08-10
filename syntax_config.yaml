@@ -1,0 +1,193 @@
+# ═══════════════════════════════════════════════════════════════
+# SYRAX INTELLIGENCE — GLOBAL CONFIG
+# "Customization out the ass."
+# Tweak weights, temps, domains, and behavioral flags for every
+# agent in the swarm. This file IS the tuning dashboard.
+# ═══════════════════════════════════════════════════════════════
+
+# ── Heartbeat & Swarm Tuning ──────────────────────────────────
+swarm:
+  heartbeat_interval_seconds: 2.5
+  max_memory_events: 500
+  broadcast_interval_seconds: 3.0
+  dashboard_port: 5200
+
+# ── Agent-Specific Weight Overrides ──────────────────────────
+# Each agent can have its temperature, enabled/disabled, and
+# domain focus adjusted here without touching the YAML registry.
+agent_weights:
+  chairman:
+    enabled: true
+    temperature_override: 0.45
+    weight: 1.5          # Heavier vote in synthesis
+    custom_prompt_suffix: "You are the CHAIRMAN. Your word is final. Be decisive."
+
+  devil:
+    enabled: true
+    temperature_override: 0.92
+    weight: 1.3          # Heavier dissent weight
+    custom_prompt_suffix: "You are the DEVIL'S ADVOCATE. Find the fatal assumption. Be merciless."
+
+  bardildo:
+    enabled: true
+    temperature_override: 0.88
+    weight: 1.0
+    custom_prompt_suffix: "You are BARDILDO. Snarky, profane, but always correct. Roast everything."
+
+  truthsleuth:
+    enabled: true
+    temperature_override: 0.35
+    weight: 1.2
+    custom_prompt_suffix: "You are TRUTHSLEUTH. White Hat auditor. Find the lie. Report the truth."
+
+  nme:
+    enabled: true
+    temperature_override: 0.95
+    weight: 0.9
+    custom_prompt_suffix: "You are NME. Ruthless battle rapper. Freestyle burns. No mercy. Bars only."
+
+  white_hat:
+    enabled: true
+    temperature_override: 0.3
+    weight: 1.1
+    domain_focus: "Facts, data, objective truth, audit trails"
+
+  red_hat:
+    enabled: true
+    temperature_override: 0.85
+    weight: 0.9
+    domain_focus: "Emotions, gut feelings, intuition, hunches"
+
+  black_hat:
+    enabled: true
+    temperature_override: 0.4
+    weight: 1.2
+    domain_focus: "Risks, dangers, flaws, what could go wrong, caution"
+
+  yellow_hat:
+    enabled: true
+    temperature_override: 0.75
+    weight: 0.9
+    domain_focus: "Benefits, opportunities, upside, optimism, value"
+
+  green_hat:
+    enabled: true
+    temperature_override: 0.9
+    weight: 0.8
+    domain_focus: "Creativity, alternatives, possibilities, new ideas"
+
+  blue_hat:
+    enabled: true
+    temperature_override: 0.45
+    weight: 1.4
+    domain_focus: "Process control, meta-cognition, thinking about thinking"
+
+  brown_hat:
+    enabled: true
+    temperature_override: 0.5
+    weight: 1.3
+    domain_focus: "Execution, implementation, getting shit done, shipping"
+
+  legal_crawler:
+    enabled: true
+    temperature_override: 0.3
+    domain_focus: "Legal filings, court records, regulatory changes, compliance"
+
+  health_crawler:
+    enabled: true
+    temperature_override: 0.4
+    domain_focus: "Medical research, FDA filings, clinical trials, public health trends"
+
+  industry_crawler:
+    enabled: true
+    temperature_override: 0.5
+    domain_focus: "Manufacturing, supply chains, industrial output, logistics trends"
+
+  commerce_crawler:
+    enabled: true
+    temperature_override: 0.55
+    domain_focus: "E-commerce, retail trends, consumer behavior, pricing signals"
+
+  finance_crawler:
+    enabled: true
+    temperature_override: 0.4
+    domain_focus: "Markets, crypto, DeFi, macroeconomic indicators, capital flows"
+
+  sin6_wraith:
+    enabled: true
+    temperature_override: 0.78
+    domain_focus: "Covert operations, shadow intelligence, deniable actions"
+
+  sin6_oracle:
+    enabled: true
+    temperature_override: 0.65
+    domain_focus: "Predictive modeling, pattern recognition, foresight"
+
+  sin6_forge:
+    enabled: true
+    temperature_override: 0.5
+    domain_focus: "Tool creation, weaponization, capability engineering"
+
+  sin6_weaver:
+    enabled: true
+    temperature_override: 0.82
+    domain_focus: "Narrative control, influence operations, story engineering"
+
+  sin6_harvest:
+    enabled: true
+    temperature_override: 0.45
+    domain_focus: "Data extraction, intelligence gathering, resource acquisition"
+
+  sin6_hollow:
+    enabled: true
+    temperature_override: 0.7
+    domain_focus: "Deception, misdirection, false flag operations, camouflage"
+
+# ── Boardroom Tuning ──────────────────────────────────────────
+boardroom:
+  default_rounds: 2
+  chairman_model: "gemini"
+  boardroom_model: "claude"
+  max_argument_length: 250
+  verdict_styles: ["go", "no-go", "conditional"]
+
+# ── Scout / Crawler Tuning ────────────────────────────────────
+scouts:
+  firefly_scan_interval_minutes: 15
+  web_crawler_user_agent: "Syntax-Intelligence/1.0"
+  max_crawl_depth: 3
+  trend_detection_window_hours: 24
+  emergent_signal_threshold: 0.7
+
+# ── Bardildo Tuning ──────────────────────────────────────────
+bardildo:
+  tone: "maximum_snark"
+  scan_skip_dirs: [".git", "node_modules", "__pycache__", "venv", ".venv"]
+  max_readme_chars: 2000
+  buddy_personas: ["askhole", "dustbunny", "summarizer", "archivist", "qa"]
+
+# ── TruthSleuth Tuning ───────────────────────────────────────
+truthsleuth:
+  monitor_interval_seconds: 10
+  max_function_complexity: 10
+  max_line_length: 100
+  forbidden_patterns: ["eval(", "exec(", "__import__(", "compile("]
+  min_docstring_length: 20
+
+# ── NME Battle Rapper Tuning ──────────────────────────────────
+nme:
+  style: "ruthless_freestyle"
+  bar_length_lines: 4
+  rhyme_scheme: "AABB"
+  max_bars_per_response: 16
+  allowed_topics: ["code_quality", "architecture", "tech_stack", "competitors", "the_industry"]
+  burn_intensity: 0.95
+
+# ── Sin6 Native Agent Tuning ──────────────────────────────────
+sin6:
+  wraith_stealth_level: 0.9
+  oracle_prediction_horizon_hours: 72
+  forge_output_types: ["script", "tool", "exploit", "patch"]
+  weaver_narrative_style: "disinformation_resistant"
+  harvest_extraction_depth: "deep"
+  hollow_camouflage_quality: "military_grade"
